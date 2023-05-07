@@ -57,9 +57,9 @@ if ($highestScore >= $_SESSION['prevHighestScore']) {
     <?php echo '<span id="score">0</span>'; ?>
     <?php echo '<span id="highestScore">Highest Score: 0</span>'; ?>
     <div class="attribution">
-        <span>Image: https://id.pinterest.com/pin/632052128972624092/</span><br>
-        <span>Music: https://tobyfox.bandcamp.com/album/undertale-soundtrack</span><br>
-        <span>Sound: https://www.myinstants.com/en/instant/you-died/?utm_source=copy&utm_medium=share</span>
+        <span>Image: <a href="https://id.pinterest.com/pin/632052128972624092/">https://id.pinterest.com/pin/632052128972624092/</a></span><br>
+        <span>Music: <a href="https://tobyfox.bandcamp.com/album/undertale-soundtrack">https://tobyfox.bandcamp.com/album/undertale-soundtrack</a></span><br>
+        <span>Sound: <a href="https://www.myinstants.com/en/instant/you-died/?utm_source=copy&utm_medium=share">https://www.myinstants.com/en/instant/you-died/?utm_source=copy&utm_medium=share</a></span><br>
     </div>
     <canvas></canvas>
 
@@ -165,6 +165,8 @@ if ($highestScore >= $_SESSION['prevHighestScore']) {
                 this.rotation = 0;
                 this.opacity = 1;
                 this.health = 3;
+                this.audio = new Audio("./sound/explosion.wav");
+                this.audio.volume = 0.2;
             }
 
             
@@ -216,6 +218,38 @@ if ($highestScore >= $_SESSION['prevHighestScore']) {
             }
         }
 
+        class WeaponUI {
+            constructor() {
+                const image = new Image()
+                image.src = "./assets/machinegun.png";
+                image.onload = () => {
+                    this.image = image;
+                    this.scaling = 0.35;
+                    this.imageWidth = image.width * this.scaling;
+                    this.imageHeight=  image.height * this.scaling;
+                    this.position = {
+                        x: this.imageWidth / 4,
+                        y: canvas.height - this.imageHeight,
+                    }
+                }
+                const image1 = new Image()
+                image1.src = "./assets/shotgun.png";
+                image1.onload = () => {
+                    this.image1 = image1;
+                }
+            }
+
+            blit() {
+                if (this.image) {
+                    if (machinegun) {
+                        c.drawImage(this.image, this.position.x, this.position.y, this.imageWidth, this.imageHeight);
+                    } else {
+                        c.drawImage(this.image1, this.position.x, this.position.y, this.imageWidth, this.imageHeight);
+                    }
+                }
+            }
+        }
+
         class Projectile {
             constructor(position, velocity) {
                 this.position = position;
@@ -226,6 +260,8 @@ if ($highestScore >= $_SESSION['prevHighestScore']) {
                 // image.src = "./assets/projectile1.png";
                 // image.onload = () => {
                 this.scaling = 0.35
+                this.audio = new Audio("./sound/shoot1.wav");
+                this.audio.volume = 0.05;
                 //     this.image = image;
                 //     this.imageWidth = image.width * this.scaling;
                 //     this.imageHeight = image.height * this.scaling;
@@ -267,6 +303,8 @@ if ($highestScore >= $_SESSION['prevHighestScore']) {
                 // image.src = "./assets/projectile1.png";
                 // image.onload = () => {
                 this.scaling = 0.35;
+                this.audio = new Audio("./sound/shoot.wav");
+                this.audio.volume = 0.1;
                 //     this.image = image;
                 //     this.imageWidth = image.width * this.scaling;
                 //     this.imageHeight = image.height * this.scaling;
@@ -380,6 +418,8 @@ if ($highestScore >= $_SESSION['prevHighestScore']) {
                 }
 
                 this.rotation = 0
+                this.audio = new Audio("./sound/explosion.wav");
+                this.audio.volume = 0.08;
             }
 
             
@@ -475,6 +515,9 @@ if ($highestScore >= $_SESSION['prevHighestScore']) {
         // let highestScore = 0 + <?php echo $_COOKIE["highest_score"] ?>;
         let highestScore = <?php echo isset($_COOKIE["highest_score"]) ? $_COOKIE["highest_score"] : 0 ?>;
 
+        const weaponUI = new WeaponUI();
+        let machinegun = true;
+
         
         const gameOverScreen = new GameOverScreen();
         const highestScoreText = new MakeText({
@@ -510,7 +553,7 @@ if ($highestScore >= $_SESSION['prevHighestScore']) {
 
         function run() {
             requestAnimationFrame(run);
-            music.volume = 0.6;
+            music.volume = 0.4;
             music.play()
             shootDelay -= 0.1;
             immunityFrame -= 0.1;
@@ -557,7 +600,7 @@ if ($highestScore >= $_SESSION['prevHighestScore']) {
             c.fillRect(0, 0, canvas.width, canvas.height);
             
             player.update();
-            
+            weaponUI.blit()
 
             if (player.health <= 0) {
                 player.opacity = 0;
@@ -603,7 +646,8 @@ if ($highestScore >= $_SESSION['prevHighestScore']) {
                                     scoreEl.innerHTML = score;
                                     grid.enemys.splice(i , 1);
                                     projectiles.splice(j, 1);
-                                    // console.log("hit")
+                                    
+                                    enemy.audio.play();
 
                                     for (i = 0; i < 15; i++) {
                                         particles.push(new Particle({
@@ -647,6 +691,7 @@ if ($highestScore >= $_SESSION['prevHighestScore']) {
                     }, 0)
                 } else {
                     enemyProjectile.update()
+                    enemyProjectile.audio.play()
                 }
 
                 if (enemyProjectile.position.y + enemyProjectile.height >= player.rectPosition.y + player.rectHeight  &&
@@ -660,22 +705,23 @@ if ($highestScore >= $_SESSION['prevHighestScore']) {
                                     x: player.position.x + player.imageWidth / 2,
                                     y: player.position.y + player.imageHeight / 2,
                                 },
-    
+                                
                                 velocity: {
                                     x: Math.random() - 0.5,
                                     y: Math.random() - 0.5,
                                 },
-    
+                                
                                 radius: Math.random() * 20,
                                 particleColor: "white",
                             }))
                         }
-
+                        
                         player.health -= 1;
                         
                         enemyProjectiles.splice(index, 1);
                         
                         immunityFrame = 2;
+                        player.audio.play();
                     }
                 }
             })
@@ -687,6 +733,7 @@ if ($highestScore >= $_SESSION['prevHighestScore']) {
                     }, 0)
                 } else {
                     projectile.update();
+                    projectile.audio.play();
                 }
             })
 
@@ -721,18 +768,77 @@ if ($highestScore >= $_SESSION['prevHighestScore']) {
 
             if (jPressed) {
                 if (shootDelay <= 0) {
-                    projectiles.push(new Projectile(
-                        position = {
-                            x: player.position.x + player.imageWidth / 2 - 14,
-                            y: player.position.y,
-                        },
-                            
-                        velocity = {
-                            x: 0,
-                            y: -10 * player.scaling,
-                        }
-                    ));
-                    shootDelay = 2;
+                    if (!machinegun) {
+                        projectiles.push(new Projectile(
+                            position = {
+                                x: player.position.x + player.imageWidth / 2 - 14,
+                                y: player.position.y,
+                            },
+                                
+                            velocity = {
+                                x: 0,
+                                y: -10 * player.scaling,
+                            }
+                        ), 
+                        new Projectile(
+                            position = {
+                                x: player.position.x + player.imageWidth / 2 - 14,
+                                y: player.position.y,
+                            },
+                                
+                            velocity = {
+                                x: 1,
+                                y: -10 * player.scaling,
+                            }
+                        ),
+                        new Projectile(
+                            position = {
+                                x: player.position.x + player.imageWidth / 2 - 14,
+                                y: player.position.y,
+                            },
+                                
+                            velocity = {
+                                x: -1,
+                                y: -10 * player.scaling,
+                            }
+                        ),
+                        new Projectile(
+                            position = {
+                                x: player.position.x + player.imageWidth / 2 - 14,
+                                y: player.position.y,
+                            },
+                                
+                            velocity = {
+                                x: -2,
+                                y: -10 * player.scaling,
+                            }
+                        ),
+                        new Projectile(
+                            position = {
+                                x: player.position.x + player.imageWidth / 2 - 14,
+                                y: player.position.y,
+                            },
+                                
+                            velocity = {
+                                x: 2,
+                                y: -10 * player.scaling,
+                            }
+                        ));
+                        shootDelay = 6;
+                    } else {
+                        projectiles.push(new Projectile(
+                            position = {
+                                x: player.position.x + player.imageWidth / 2 - 14,
+                                y: player.position.y,
+                            },
+                                
+                            velocity = {
+                                x: 0,
+                                y: -10 * player.scaling,
+                            }
+                        ));
+                        shootDelay = 1.8;
+                    }
                 }
             }
 
@@ -753,6 +859,7 @@ if ($highestScore >= $_SESSION['prevHighestScore']) {
             })
             
             if (gameOver) {
+                jPressed = false;
                 gameOverScreen.blit()
                 gameOverScreen.opacity += 0.001;
                 highestScoreEl.style.opacity = 1;
@@ -766,8 +873,6 @@ if ($highestScore >= $_SESSION['prevHighestScore']) {
                         gameOverScreen.audio.play();
                     }, 2500)
                 }
-                // c.font = highestScoreText.font;
-                // c.fillText(highestScoreText.word, highestScoreText.position.x, highestScoreText.position.y);
             }
         }
 
@@ -791,6 +896,12 @@ if ($highestScore >= $_SESSION['prevHighestScore']) {
                 case "j":
                     jPressed = true;
                     break;
+                case "q":
+                    if (machinegun) {
+                        machinegun = false;
+                    } else {
+                        machinegun = true;
+                    }
             }
         })
 
